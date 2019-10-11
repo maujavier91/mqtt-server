@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = socket_io(server);
 
 const faker = require('faker');
-
+const port = process.env.PORT || 3001
 
 
 var connection = mysql.createConnection({
@@ -95,6 +95,6 @@ setInterval(() => {
 
 
 
-  server.listen(3001, () => {
-    console.log('Listening on port 3001');
+  server.listen(port, () => {
+    console.log('Listening on port '+ port);
   });
