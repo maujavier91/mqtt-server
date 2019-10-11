@@ -1,0 +1,22 @@
+{
+  "name": "mqtt-db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mqtt-db",
+  "scripts": {
+    "start": "node mqtt-db.js && (cd ..; npm run start)"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "moment": "^2.24.0",
+    "mqtt": "^3.0.0",
+    "mysql": "^2.17.1",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "faker": "^4.1.0"
+  }
+}
