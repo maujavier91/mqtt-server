@@ -62,6 +62,17 @@ setInterval(() => {
   VBat: faker.finance.amount(0, 30, 3),
   RSSI: faker.finance.amount(0, 30, 3)
 }
+   
+    connection.query('INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', Object.values(testData) ,
+    (error, results, fields) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('table update')
+      }
+
+    });
+  
   io.emit('actualizacion', testData)
   now.add(3, 'minutes')
 }, 3000);
@@ -76,7 +87,9 @@ setInterval(() => {
       connection.query('INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',msgArray,
       (error, results, fields)=>{
           if(error){
-              console.log(error);
+              console.log('Failed to update table');
+          } else {
+            console.log('table update' + msgArray[0]+' '+msgArray[1])
           }
           
       });
@@ -84,14 +97,21 @@ setInterval(() => {
       
   }) 
 
-  /* GET users listing. */
-/* app.get('/data', (req, res, next) => 
- {
-  connection.query('SELECT * FROM mqttdata', (err,results,fields) => {
-    if (err) throw err;
-    res.send(results);
-  })
-}); */
+  app.post('/api/query', (req, res) => {
+    connection.query(`SELECT ${req.body.columns} FROM mqttdata 
+    WHERE datetime 
+    BETWEEN CAST(${req.body.startDate} AS DATETIME) AND CAST(${req.body.endDate} AS DATETIME)`,
+    (error, results, fields) => {
+      if (error){
+        console.log(error)
+      } else {
+        res.send(results)
+        console.log(results)
+      }
+    }
+    )
+  }
+  )
 
 
 
