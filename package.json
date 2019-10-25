@@ -4,7 +4,7 @@
   "description": "",
   "main": "mqtt-db",
   "scripts": {
-    "start": "node mqtt-db.js && (cd ..; npm run start)"
+    "start": "nodemon mqtt-db.js && (cd ..; npm run start)"
   },
   "author": "",
   "license": "ISC",

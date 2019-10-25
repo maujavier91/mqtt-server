@@ -1,27 +1,29 @@
-const express = require('express');
-const mysql= require('mysql');
-const http = require('http');
-const socket_io = require('socket.io'); 
-const mqtt = require('mqtt');
-const moment = require('moment');
+const express = require('express')
+const mysql= require('mysql')
+const http = require('http')
+const socket_io = require('socket.io') 
+const mqtt = require('mqtt')
+const moment = require('moment')
 
-const app = express();
-const server = http.createServer(app);
-const io = socket_io(server);
+const app = express()
+const server = http.createServer(app)
+const bodyParser = require('body-parser')
+app.use(bodyParser.json())
+const io = socket_io(server)
 
-const faker = require('faker');
+const faker = require('faker')
 const port = process.env.PORT || 3001
-
+const table_name= 'mqttdata'
 
 var connection = mysql.createConnection({
     host     : 'localhost',
     user     : 'root',
     password : '',
     database : 'testdbmqtt'
-  });
+  })
   
 
-const client = mqtt.connect('mqtt://test.mosquitto.org');
+const client = mqtt.connect('mqtt://test.mosquitto.org')
 client.on('connect', ()=> {
   client.subscribe('MPT1/out', function (err) {
     if (!err) {
@@ -44,7 +46,7 @@ client.on('connect', ()=> {
                       'VBat',
                       'RSSI'];
 
-  let now = moment()
+/*   let now = moment()
 setInterval(() => {
   let testData={
     Datetime: now.format('YYYY-MM-DD HH:mm:ss'),
@@ -75,14 +77,14 @@ setInterval(() => {
   
   io.emit('actualizacion', testData)
   now.add(3, 'minutes')
-}, 3000);
+}, 3000); */
   client.on('message', (topic, message) =>{
-    let msgArray = message.toString().split(',');
+    let msgArray = message.toString().split(',')
     let formattedDatetime = moment(msgArray[0] + msgArray[1], 'DDMMYYYYHHmmss').format('YYYY-MM-DD HH:mm:ss')
-    msgArray.splice(0, 2, formattedDatetime);
-    let dataUnit={};
+    msgArray.splice(0, 2, formattedDatetime)
+    let dataUnit={}
     datafields.forEach((key, index) => {
-      dataUnit[key]=msgArray[index];
+      dataUnit[key]=msgArray[index]
     })
       connection.query('INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',msgArray,
       (error, results, fields)=>{
@@ -92,28 +94,31 @@ setInterval(() => {
             console.log('table update' + msgArray[0]+' '+msgArray[1])
           }
           
-      });
-      io.emit('actualizacion', dataUnit);
+      })
+      io.emit('actualizacion', dataUnit)
       
   }) 
 
   app.post('/api/query', (req, res) => {
-    connection.query(`SELECT ${req.body.columns} FROM mqttdata 
-    WHERE datetime 
-    BETWEEN CAST(${req.body.startDate} AS DATETIME) AND CAST(${req.body.endDate} AS DATETIME)`,
-    (error, results, fields) => {
-      if (error){
-        console.log(error)
-      } else {
-        res.send(results)
-        console.log(results)
+    if (req.body.columns.length){
+     const queryString = "SELECT "+req.body.columns+" FROM "+table_name+
+    " WHERE datetime BETWEEN "+
+    "CAST('"+req.body.startDate+"' AS DATETIME) AND CAST('"+req.body.endDate+"' AS DATETIME)"
+    console.log(queryString)
+    connection.query(queryString,
+      (error, results, fields) => {
+        if (error) {
+          console.log(error)
+        } else {
+          res.send(results)
+        }
       }
-    }
-    )
+    ) 
+    } else {res.send([])}
+    
+  
   }
   )
-
-
 
   server.listen(port, () => {
     console.log('Listening on port '+ port);
