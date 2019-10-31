@@ -1,50 +1,51 @@
-const express = require('express')
-const mysql= require('mysql')
-const http = require('http')
-const socket_io = require('socket.io') 
-const mqtt = require('mqtt')
-const moment = require('moment')
+const express = require("express");
+const mysql = require("mysql");
+const http = require("http");
+const socket_io = require("socket.io");
+const mqtt = require("mqtt");
+const moment = require("moment");
 
-const app = express()
-const server = http.createServer(app)
-const bodyParser = require('body-parser')
-app.use(bodyParser.json())
-const io = socket_io(server)
+const app = express();
+const server = http.createServer(app);
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
+const io = socket_io(server);
 
-const faker = require('faker')
-const port = process.env.PORT || 3001
-const table_name= 'mqttdata'
+const port = process.env.PORT || 3001;
+const table_name = "mqttdata";
 
 var connection = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : '',
-    database : 'testdbmqtt'
-  })
-  
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "testdbmqtt"
+});
 
-const client = mqtt.connect('mqtt://test.mosquitto.org')
-client.on('connect', ()=> {
-  client.subscribe('MPT1/out', function (err) {
+const client = mqtt.connect("mqtt://test.mosquitto.org");
+client.on("connect", () => {
+  client.subscribe("MPT1/out", function(err) {
     if (!err) {
-      console.log('success')
-    } else console.log('error in establishing connection')
-  })})
+      console.log("success");
+    } else console.log("error in establishing connection");
+  });
+});
 
-  const datafields = ['Datetime',
-                      'Range 1',
-                      'Range 2', 
-                      'gx', 
-                      'gy',
-                      'gz',
-                      'ax',
-                      'ay',
-                      'az',
-                      'Pitch',
-                      'Roll',
-                      'Temp',
-                      'VBat',
-                      'RSSI'];
+const datafields = [
+  "Datetime",
+  "Range 1",
+  "Range 2",
+  "gx",
+  "gy",
+  "gz",
+  "ax",
+  "ay",
+  "az",
+  "Pitch",
+  "Roll",
+  "Temp",
+  "VBat",
+  "RSSI"
+];
 
 /*   let now = moment()
 setInterval(() => {
@@ -78,48 +79,80 @@ setInterval(() => {
   io.emit('actualizacion', testData)
   now.add(3, 'minutes')
 }, 3000); */
-  client.on('message', (topic, message) =>{
-    let msgArray = message.toString().split(',')
-    let formattedDatetime = moment(msgArray[0] + msgArray[1], 'DDMMYYYYHHmmss').format('YYYY-MM-DD HH:mm:ss')
-    msgArray.splice(0, 2, formattedDatetime)
-    let dataUnit={}
-    datafields.forEach((key, index) => {
-      dataUnit[key]=msgArray[index]
-    })
-      connection.query('INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',msgArray,
-      (error, results, fields)=>{
-          if(error){
-              console.log('Failed to update table');
-          } else {
-            console.log('table update' + msgArray[0]+' '+msgArray[1])
-          }
-          
-      })
-      io.emit('actualizacion', dataUnit)
-      
-  }) 
-
-  app.post('/api/query', (req, res) => {
-    if (req.body.columns.length){
-     const queryString = "SELECT "+req.body.columns+" FROM "+table_name+
-    " WHERE datetime BETWEEN "+
-    "CAST('"+req.body.startDate+"' AS DATETIME) AND CAST('"+req.body.endDate+"' AS DATETIME)"
-    console.log(queryString)
-    connection.query(queryString,
-      (error, results, fields) => {
-        if (error) {
-          console.log(error)
-        } else {
-          res.send(results)
-        }
-      }
-    ) 
-    } else {res.send([])}
-    
-  
-  }
-  )
-
-  server.listen(port, () => {
-    console.log('Listening on port '+ port);
+client.on("message", (topic, message) => {
+  let msgArray = message.toString().split(",");
+  let formattedDatetime = moment(
+    msgArray[0] + msgArray[1],
+    "DDMMYYYYHHmmss"
+  ).format("YYYY-MM-DD HH:mm:ss");
+  msgArray.splice(0, 2, formattedDatetime);
+  let dataUnit = {};
+  datafields.forEach((key, index) => {
+    dataUnit[key] = msgArray[index];
   });
+  connection.query(
+    "INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    msgArray,
+    (error, results, fields) => {
+      if (error) {
+        console.log("Failed to update table");
+      } else {
+        console.log("table update" + msgArray[0] + " " + msgArray[1]);
+      }
+    }
+  );
+  io.emit("actualizacion", dataUnit);
+});
+
+app.post("/api/query", (req, res) => {
+  if (req.body.columns.length) {
+    const queryString =
+      "SELECT " +
+      req.body.columns +
+      " FROM " +
+      table_name +
+      " WHERE datetime BETWEEN " +
+      "CAST('" +
+      req.body.startDate +
+      "' AS DATETIME) AND CAST('" +
+      req.body.endDate +
+      "' AS DATETIME)";
+    const queryDateString =
+      "SELECT datetime" +
+      " FROM " +
+      table_name +
+      " WHERE datetime BETWEEN " +
+      "CAST('" +
+      req.body.startDate +
+      "' AS DATETIME) AND CAST('" +
+      req.body.endDate +
+      "' AS DATETIME)";
+    console.log(queryString);
+    connection.query(queryDateString, (error, resultsDatetime) => {
+      if (error) {
+        console.log(error);
+      } else {
+        connection.query(queryString, (error, results, fields) => {
+          if (error) {
+            console.log(error);
+          } else {
+            let columns={}
+            req.body.columns.forEach(item => {columns[item]=results.map(element => element[item])})
+          
+            res.json({
+              datetime: resultsDatetime.map(item => item["datetime"]),
+              results,
+              columns
+            });
+          }
+        });
+      }
+    });
+  } else {
+    res.json({ datetime: [], results: [] , columns: {}});
+  }
+});
+
+server.listen(port, () => {
+  console.log("Listening on port " + port);
+});
