@@ -21,7 +21,9 @@ var connection = mysql.createConnection({
   database: "testdbmqtt"
 });
 
-const client = mqtt.connect("mqtt://test.mosquitto.org");
+const client = mqtt.connect(
+  "mqtt://ec2-34-218-99-251.us-west-2.compute.amazonaws.com"
+);
 client.on("connect", () => {
   client.subscribe("MPT1/out", function(err) {
     if (!err) {
