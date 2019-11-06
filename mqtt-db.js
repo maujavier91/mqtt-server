@@ -17,7 +17,7 @@ const table_name = "mqtt_data";
 var connection = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "",
+  password: "Orbittas.1234",
   database: "mqtt_dashboard"
 });
 
