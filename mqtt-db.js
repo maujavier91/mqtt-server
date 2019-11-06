@@ -68,7 +68,7 @@ setInterval(() => {
   RSSI: faker.finance.amount(0, 30, 3)
 }
    
-    connection.query('INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', Object.values(testData) ,
+    connection.query('INSERT INTO mqtt_data VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', Object.values(testData) ,
     (error, results, fields) => {
       if (error) {
         console.log(error);
@@ -93,7 +93,7 @@ client.on("message", (topic, message) => {
     dataUnit[key] = msgArray[index];
   });
   connection.query(
-    "INSERT INTO mqttdata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO mqtt_data VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     msgArray,
     (error, results, fields) => {
       if (error) {
