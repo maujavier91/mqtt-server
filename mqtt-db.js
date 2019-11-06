@@ -12,13 +12,13 @@ app.use(bodyParser.json());
 const io = socket_io(server);
 
 const port = process.env.PORT || 3001;
-const table_name = "mqttdata";
+const table_name = "mqtt_data";
 
 var connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "testdbmqtt"
+  database: "mqtt_dashboard"
 });
 
 const client = mqtt.connect(
