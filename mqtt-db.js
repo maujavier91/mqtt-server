@@ -98,6 +98,7 @@ client.on("message", (topic, message) => {
     (error, results, fields) => {
       if (error) {
         console.log("Failed to update table");
+        console.log(error);
       } else {
         console.log("table update" + msgArray[0] + " " + msgArray[1]);
       }
