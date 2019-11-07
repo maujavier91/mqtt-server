@@ -4,11 +4,12 @@ const http = require("http");
 const socket_io = require("socket.io");
 const mqtt = require("mqtt");
 const moment = require("moment");
-
+const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
+app.use(cors());
 const io = socket_io(server);
 
 const port = process.env.PORT || 3001;
